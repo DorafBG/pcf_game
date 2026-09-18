@@ -1,0 +1,9 @@
+node_modules
+dist
+src/generated
+coverage
+.env
+.env.*
+*.db
+*.md
+.git

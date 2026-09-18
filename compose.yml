@@ -1,0 +1,78 @@
+# PCF Arena — Plateforme Micro-services
+# Démarrer : docker compose up -d --build
+# Stopper   : docker compose down
+name: pcf-arena
+
+x-auth-env: &auth-env
+  DATABASE_URL: postgresql://polyshop:${POSTGRES_PASSWORD:?définir dans .env}@auth-db:5432/auth
+  JWT_SECRET: ${JWT_SECRET:?définir dans .env}
+  JWT_ISSUER: polyshop-auth
+  JWT_TTL_SECONDS: 900
+  CORS_ORIGINS: http://localhost:5173,http://localhost:8080
+
+services:
+  # ---------- Gateway (Nginx) ----------
+  gateway:
+    build: ./gateway
+    image: pcf/gateway:1.0
+    ports:
+      - "8080:8080"
+    depends_on:
+      auth:
+        condition: service_started
+    restart: unless-stopped
+
+  # ---------- Redis (Événements Streams & Matchmaking) ----------
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # ---------- Service Auth ----------
+  auth-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: polyshop
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: auth
+    volumes:
+      - auth-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U polyshop -d auth"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  auth-migrate:
+    build:
+      context: ./auth
+      target: build
+    command: sh -c "npx prisma migrate deploy && npx prisma db seed"
+    environment: *auth-env
+    depends_on:
+      auth-db:
+        condition: service_healthy
+
+  auth:
+    build: ./auth
+    image: pcf/auth:1.0
+    ports:
+      - "3002:3000"
+    environment: *auth-env
+    depends_on:
+      auth-migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  auth-data:
+  redis-data:
