@@ -20,6 +20,8 @@ services:
     depends_on:
       auth:
         condition: service_started
+      boutique:
+        condition: service_started
     restart: unless-stopped
 
   # ---------- Redis (Événements Streams & Matchmaking) ----------
@@ -71,6 +73,17 @@ services:
     depends_on:
       auth-migrate:
         condition: service_completed_successfully
+    restart: unless-stopped
+
+  # ---------- Service Boutique ----------
+  boutique:
+    build: ./boutique
+    image: pcf/boutique:1.0
+    ports:
+      - "3003:3000"
+    volumes:
+      - ./boutique/public:/app/public
+      - ./boutique/src:/app/src
     restart: unless-stopped
 
 volumes:
