@@ -1,7 +1,7 @@
-# PCF Arena — Plateforme Micro-services
+# PCF 2027 - le jeu en ligne de Pierre Ciseaux Feuille
 # Démarrer : docker compose up -d --build
 # Stopper   : docker compose down
-name: pcf-arena
+name: pcf-2027
 
 x-auth-env: &auth-env
   DATABASE_URL: postgresql://polyshop:${POSTGRES_PASSWORD:?définir dans .env}@auth-db:5432/auth
@@ -9,6 +9,10 @@ x-auth-env: &auth-env
   JWT_ISSUER: polyshop-auth
   JWT_TTL_SECONDS: 900
   CORS_ORIGINS: http://localhost:5173,http://localhost:8080
+
+x-boutique-env: &boutique-env
+  DATABASE_URL: postgresql://${BOUTIQUE_DB_USER:?définir dans .env}:${BOUTIQUE_DB_PASSWORD:?définir dans .env}@boutique-db:5432/${BOUTIQUE_DB_NAME:?définir dans .env}
+  PORT: 3000
 
 services:
   # ---------- Gateway (Nginx) ----------
@@ -19,6 +23,8 @@ services:
       - "8080:8080"
     depends_on:
       auth:
+        condition: service_started
+      boutique:
         condition: service_started
     restart: unless-stopped
 
@@ -39,6 +45,7 @@ services:
   # ---------- Service Auth ----------
   auth-db:
     image: postgres:17-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: polyshop
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -73,6 +80,50 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
 
+  # MICROSERVICE BOUTIQUE
+  boutique-db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${BOUTIQUE_DB_USER:?définir dans .env}
+      POSTGRES_PASSWORD: ${BOUTIQUE_DB_PASSWORD:?définir dans .env}
+      POSTGRES_DB: ${BOUTIQUE_DB_NAME:?définir dans .env}
+    volumes:
+      - boutique-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${BOUTIQUE_DB_USER:?définir dans .env} -d ${BOUTIQUE_DB_NAME:?définir dans .env}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  boutique-migrate:
+    build: ./boutique
+    command: sh -c "npx prisma db push && npx prisma db seed"
+    environment: *boutique-env
+    volumes:
+      - ./boutique/src:/app/src
+      - ./boutique/prisma:/app/prisma
+    depends_on:
+      boutique-db:
+        condition: service_healthy
+
+  boutique:
+    build: ./boutique
+    image: pcf/boutique:1.0
+    ports:
+      - "3003:3000"
+    environment: *boutique-env
+    volumes:
+      - ./boutique/public:/app/public
+      - ./boutique/src:/app/src
+      - ./boutique/prisma:/app/prisma
+    depends_on:
+      boutique-migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
 volumes:
   auth-data:
   redis-data:
+  boutique-data:
