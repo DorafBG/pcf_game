@@ -1,5 +1,5 @@
 import express from 'express';
-import { items } from './items.js';
+import { prisma } from './db.js';
 
 // Ici sont definies toutes les routes API
 export function buildApp() {
@@ -10,7 +10,7 @@ export function buildApp() {
   // permet d'utiliser les images stockees
   app.use('/api/v1/boutique/images', express.static('public/images'));
 
-  // PErmet de verifie que le service est bien en ligne
+  // Permet de verifier que le service est bien en ligne
   app.get('/health', (_req, res) => {
     res.json({
       status: 'ok',
@@ -19,22 +19,50 @@ export function buildApp() {
     });
   });
 
-  // Route catalogue qui liste tous les items de la boutique (ex: /api/v1/boutique)
-  app.get(['/api/v1/boutique', '/api/v1/boutique/'], (_req, res) => {
-    res.json(items);
+  // Route catalogue qui liste les items depuis la BDD PostgreSQL avec filtrage optionnel :
+  // - sans parametre : /api/v1/boutique -> renvoie tout le catalogue depuis la BDD
+  // - avec parametre : /api/v1/boutique?category=ROCK -> filtre par categorie dans la BDD
+  app.get(['/api/v1/boutique', '/api/v1/boutique/'], async (req, res) => {
+    const { category } = req.query;
+
+    try {
+      // Si une categorie est demandee, on filtre dessus, sinon on prend tout
+      const where = typeof category === 'string' && category.trim().length > 0
+        ? { category: category.trim().toUpperCase() }
+        : undefined;
+
+      const items = await prisma.cosmeticItem.findMany({
+        where,
+        orderBy: { id: 'asc' }
+      });
+
+      res.json(items);
+    } catch (err) {
+      console.error('[Boutique] Erreur lecture catalogue BDD :', err);
+      res.status(500).json({ error: 'Erreur serveur BDD' });
+    }
   });
 
-  // Route pour un item specifique (ex: /api/v1/boutique/1)
-  app.get('/api/v1/boutique/:id', (req, res) => {
-    const item = items.find((i) => i.id === req.params.id);
-    if (!item) {
-      res.status(404).json({
-        error: 'Item non trouvé',
-        id: req.params.id
+  // Route pour un item specifique depuis la BDD (ex: /api/v1/boutique/1)
+  app.get('/api/v1/boutique/:id', async (req, res) => {
+    try {
+      const item = await prisma.cosmeticItem.findUnique({
+        where: { id: req.params.id }
       });
-      return;
+
+      if (!item) {
+        res.status(404).json({
+          error: 'Item non trouvé',
+          id: req.params.id
+        });
+        return;
+      }
+
+      res.json(item);
+    } catch (err) {
+      console.error('[Boutique] Erreur lecture item BDD :', err);
+      res.status(500).json({ error: 'Erreur serveur BDD' });
     }
-    res.json(item);
   });
 
   return app;
