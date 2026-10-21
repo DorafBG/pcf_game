@@ -42,6 +42,13 @@ function handleLogout() {
           <h2>Boutique & Skins</h2>
           <p>Achète des skins ou recharge tes pièces !</p>
         </div>
+
+        <!-- Carte Profil -->
+        <div class="menu-card profile-card" @click="goTo('/profile')">
+          <div class="card-icon">👤</div>
+          <h2>Mon Profil</h2>
+          <p>Consulte tes statistiques, victoires et skins !</p>
+        </div>
       </div>
     </main>
   </div>
@@ -87,7 +94,7 @@ function handleLogout() {
 .cards-grid {
   display: flex;
   justify-content: center;
-  gap: 2.5rem;
+  gap: 2rem;
   flex-wrap: wrap;
 }
 
@@ -95,8 +102,8 @@ function handleLogout() {
   background: white;
   border: 4px solid #2c3e50;
   border-radius: 16px;
-  padding: 2.5rem;
-  width: 280px;
+  padding: 2rem;
+  width: 260px;
   text-align: center;
   cursor: pointer;
   box-shadow: 6px 6px 0px #2c3e50;
@@ -109,8 +116,13 @@ function handleLogout() {
 }
 
 .shop-card {
-  transform: rotate(2deg);
+  transform: rotate(1.5deg);
   background: #fff9db;
+}
+
+.profile-card {
+  transform: rotate(-1.5deg);
+  background: #e6fcf5;
 }
 
 .menu-card:hover {
@@ -118,8 +130,8 @@ function handleLogout() {
 }
 
 .card-icon {
-  font-size: 4rem;
-  margin-bottom: 1rem;
+  font-size: 3.5rem;
+  margin-bottom: 0.8rem;
 }
 
 .paper-btn {
