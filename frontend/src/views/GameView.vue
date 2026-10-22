@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { socketService } from '@/services/socket'
 
 const router = useRouter()
 
-// État de la partie
 const gameState = ref<'waiting' | 'playing' | 'result'>('waiting')
 const playerChoice = ref<string | null>(null)
 const opponentChoice = ref<string | null>(null)
@@ -18,44 +18,63 @@ const choices = [
   { id: 'scissors', name: 'Ciseaux', icon: '✂️', color: '#ffe74c' }
 ]
 
-// Helper pour éviter les erreurs TypeScript "Object is possibly 'undefined'"
 function getChoiceIcon(choiceId: string | null): string {
   if (!choiceId) return '❓'
   const found = choices.find(c => c.id === choiceId)
   return found ? found.icon : '❓'
 }
 
+onMounted(() => {
+  const socket = socketService.getSocket() || socketService.connect()
+
+  // Réception du résultat du tour renvoyé par la Gateway
+  socket.on('roundResult', (data: {
+    playerChoice: string,
+    opponentChoice: string,
+    result: 'win' | 'lose' | 'draw',
+    playerScore: number,
+    opponentScore: number
+  }) => {
+    opponentChoice.value = data.opponentChoice
+    playerScore.value = data.playerScore
+    opponentScore.value = data.opponentScore
+
+    if (data.result === 'win') {
+      resultMessage.value = 'Victoire ! 🎉'
+    } else if (data.result === 'lose') {
+      resultMessage.value = 'Défaite ! 💥'
+    } else {
+      resultMessage.value = 'Égalité ! 🤝'
+    }
+
+    gameState.value = 'result'
+  })
+
+  // Fin de partie déclenchée par le serveur
+  socket.on('gameEnd', (data: { winner: string }) => {
+    resultMessage.value = `Partie terminée ! Gagnant : ${data.winner}`
+  })
+})
+
+onUnmounted(() => {
+  const socket = socketService.getSocket()
+  if (socket) {
+    socket.off('roundResult')
+    socket.off('gameEnd')
+  }
+})
+
 function makeChoice(choiceId: string) {
-  if (gameState.value === 'result') return
-  
+  if (gameState.value === 'result' || gameState.value === 'playing') return
+
   playerChoice.value = choiceId
   gameState.value = 'playing'
 
-  setTimeout(() => {
-    const randomIndex = Math.floor(Math.random() * choices.length)
-    // Utilisation d'un fallback 'rock' ou assertion non-null pour garantir le type string
-    const randomChoice = choices[randomIndex]?.id ?? 'rock'
-    
-    opponentChoice.value = randomChoice
-    calculateResult(choiceId, randomChoice)
-  }, 1200)
-}
-
-function calculateResult(player: string, opponent: string) {
-  if (player === opponent) {
-    resultMessage.value = 'Égalité ! 🤝'
-  } else if (
-    (player === 'rock' && opponent === 'scissors') ||
-    (player === 'paper' && opponent === 'rock') ||
-    (player === 'scissors' && opponent === 'paper')
-  ) {
-    resultMessage.value = 'Victoire ! 🎉 (+10 🪙)'
-    playerScore.value++
-  } else {
-    resultMessage.value = 'Défaite ! 💥'
-    opponentScore.value++
+  // Envoi du coup joué à la Gateway/Microservice de jeu
+  const socket = socketService.getSocket()
+  if (socket) {
+    socket.emit('playMove', { choice: choiceId })
   }
-  gameState.value = 'result'
 }
 
 function resetRound() {
@@ -63,12 +82,16 @@ function resetRound() {
   opponentChoice.value = null
   resultMessage.value = ''
   gameState.value = 'waiting'
+
+  const socket = socketService.getSocket()
+  if (socket) {
+    socket.emit('nextRound')
+  }
 }
 </script>
 
 <template>
   <div class="game-wrapper">
-    <!-- En-tête avec scores et retour -->
     <header class="game-header">
       <button @click="router.push('/home')" class="paper-btn back-btn">⬅️ Quitter</button>
       <div class="score-board">
@@ -78,9 +101,7 @@ function resetRound() {
       </div>
     </header>
 
-    <!-- Arène de jeu -->
     <main class="arena">
-      <!-- Zone Joueur -->
       <div class="player-zone">
         <h3>Ton Choix</h3>
         <div class="choice-display paper-card" :class="{ selected: playerChoice }">
@@ -88,19 +109,17 @@ function resetRound() {
         </div>
       </div>
 
-      <!-- Zone VS / Animation -->
       <div class="versus-zone">
         <div v-if="gameState === 'playing'" class="thinking-dots">
-          <span>✂️</span> Duel en cours...
+          <span>✂️</span> En attente de l'adversaire...
         </div>
         <div v-else-if="gameState === 'result'" class="result-box">
           <h2>{{ resultMessage }}</h2>
-          <button @click="resetRound" class="paper-btn play-again-btn">Rejouer 🔄</button>
+          <button @click="resetRound" class="paper-btn play-again-btn">Tour suivant 🔄</button>
         </div>
         <div v-else class="vs-badge">VS</div>
       </div>
 
-      <!-- Zone Adversaire -->
       <div class="opponent-zone">
         <h3>Adversaire</h3>
         <div class="choice-display paper-card opponent">
@@ -113,7 +132,6 @@ function resetRound() {
       </div>
     </main>
 
-    <!-- Barre de choix des coups -->
     <footer class="controls">
       <h3>Choisis ta main :</h3>
       <div class="buttons-group">
@@ -166,7 +184,6 @@ function resetRound() {
   margin: 0 0.8rem;
 }
 
-/* Arène */
 .arena {
   display: flex;
   justify-content: space-around;
@@ -246,7 +263,6 @@ function resetRound() {
   margin-bottom: 0.8rem;
 }
 
-/* Contrôles */
 .controls {
   text-align: center;
 }
