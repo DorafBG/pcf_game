@@ -30,7 +30,7 @@ function handleLogout() {
       
       <div class="cards-grid">
         <!-- Carte Jouer -->
-        <div class="menu-card play-card" @click="goTo('/game')">
+        <div class="menu-card play-card" @click="goTo('/matchmaking')">
           <div class="card-icon">🎮</div>
           <h2>Lancer une Partie</h2>
           <p>Affronte un autre joueur en temps réel !</p>
