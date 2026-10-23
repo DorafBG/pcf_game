@@ -15,3 +15,9 @@ export const GameParameters = z.object({
     player2: PlayerConfigSchema,
 });
 export type GameParameters = z.infer<typeof GameParameters>
+
+export const MoveParameters = z.object({
+    playerId: z.string(),
+    move: z.enum(['rock', 'paper', 'scissors', 'well']),
+});
+export type MoveParameters = z.infer<typeof MoveParameters>

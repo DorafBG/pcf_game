@@ -1,4 +1,4 @@
-import { NewGame } from "../domain/game.js";
+import { type NewGame } from "../domain/game.js";
 import type { GameRepository } from "../domain/game.repository.js";
 
 export class CreateGame {

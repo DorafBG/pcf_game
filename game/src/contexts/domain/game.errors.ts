@@ -1,11 +1,11 @@
-import { DomainError } from '../shared/domain-error.js'
+import { DomainError } from "../../shared/domain-error.js";
 
 export class IdenticalPlayerIds extends DomainError {
     constructor() { super('The two PlayerIds are identical', 400, 'identical-player-ids', 'Identical player ids'); }
 }
 
 export class InvalidPlayerId extends DomainError {
-    constructor() { super('This playerId cannot play in this game', 400, 'invalid-player-id', 'InvalidPlayerId'); }
+    constructor() { super('This playerId cannot play in this game', 404, 'invalid-player-id', 'InvalidPlayerId'); }
 }
 
 export class PlayerIdAlreadyPlayed extends DomainError {
@@ -18,4 +18,8 @@ export class UnauthorizedMove extends DomainError {
 
 export class FinishedGame extends DomainError {
     constructor() { super('This game is ended', 400, 'finished-game', 'FinishedGame'); }
+}
+
+export class InvalidGameId extends DomainError {
+    constructor() { super('Game not found', 404, 'invalid-game-id', 'InvalidGameId'); }
 }

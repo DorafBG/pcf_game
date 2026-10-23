@@ -20,6 +20,8 @@ services:
     depends_on:
       auth:
         condition: service_started
+      game:
+        condition: service_started
     restart: unless-stopped
 
   # ---------- Redis (Événements Streams & Matchmaking) ----------
@@ -30,7 +32,7 @@ services:
     volumes:
       - redis-data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -46,7 +48,7 @@ services:
     volumes:
       - auth-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U polyshop -d auth"]
+      test: [ "CMD-SHELL", "pg_isready -h 127.0.0.1 -U polyshop -d auth" ]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -71,6 +73,15 @@ services:
     depends_on:
       auth-migrate:
         condition: service_completed_successfully
+    restart: unless-stopped
+
+  game:
+    build: ./game
+    image: pcf/game:1.0
+    ports:
+      - "3003:3000"
+    environment:
+      PORT: 3000
     restart: unless-stopped
 
 volumes:

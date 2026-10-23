@@ -1,0 +1,36 @@
+{
+    "name": "@polyshop/game",
+    "version": "0.1.0",
+    "private": true,
+    "description": "PolyShop - service game",
+    "type": "module",
+    "engines": {
+        "node": ">=22"
+    },
+    "scripts": {
+        "dev": "tsx watch src/main.ts",
+        "build": "tsc",
+        "start": "node dist/main.js",
+        "test": "vitest run",
+        "lint": "eslint .",
+        "typecheck": "tsc --noEmit"
+    },
+    "license": "CC-BY-SA-4.0",
+    "dependencies": {
+        "zod": "^4.5.4",
+        "yaml": "^2.9.0",
+        "express": "^5.2.1",
+        "swagger-ui-express": "^5.0.1"
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "@types/cors": "^2.8.19",
+        "@types/express": "^5.0.6",
+        "@types/swagger-ui-express": "^4.1.8",
+        "eslint": "^10.10.0",
+        "tsx": "^4.23.13",
+        "typescript": "^5.9.3",
+        "typescript-eslint": "^8.69.0",
+        "vitest": "^5.0.0"
+    }
+}

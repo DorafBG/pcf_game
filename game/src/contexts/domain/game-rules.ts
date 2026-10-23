@@ -1,4 +1,4 @@
-import { Game, Move } from './game.js';
+import { type Game, type Move } from './game.js';
 import { InvalidPlayerId, PlayerIdAlreadyPlayed, UnauthorizedMove, FinishedGame } from './game.errors.js';
 
 type RoundWinner = 'tie' | 'player1' | 'player2';
