@@ -1,0 +1,17 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model CosmeticItem {
+  id          String  @id
+  name        String
+  category    String  // ROCK, PAPER, SCISSORS, AVATAR, WELL
+  price       Int
+  description String
+  imageUrl    String?
+}
