@@ -1,7 +1,7 @@
-# PCF 2027 - le jeu en ligne de Pierre Ciseaux Feuille
+# PCF Arena — Plateforme Micro-services
 # Démarrer : docker compose up -d --build
 # Stopper   : docker compose down
-name: pcf-2027
+name: pcf-arena
 
 x-auth-env: &auth-env
   DATABASE_URL: postgresql://polyshop:${POSTGRES_PASSWORD:?définir dans .env}@auth-db:5432/auth
