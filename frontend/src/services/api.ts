@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 // L'URL de la Gateway de Quentin (à ajuster selon le port choisi dans le groupe)
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
 export const api = axios.create({
   baseURL: API_URL,

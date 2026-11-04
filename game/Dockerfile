@@ -10,7 +10,7 @@ RUN npm ci
 FROM deps AS build
 COPY tsconfig.json ./
 COPY src ./src
-COPY docs ./docs
+#COPY docs ./docs
 RUN npm run build
 
 # ---------- 3. prod-deps : node_modules élagué (sans devDependencies)
@@ -23,7 +23,7 @@ ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=prod-deps --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/dist ./dist
-COPY --from=build --chown=node:node /app/docs ./docs
+#COPY --from=build --chown=node:node /app/docs ./docs
 COPY --chown=node:node package.json ./
 USER node
 EXPOSE 3000

@@ -108,9 +108,20 @@ services:
       retries: 10
       start_period: 10s
 
+  # boutique-migrate:
+  #   build: ./boutique
+  #   command: sh -c "npx prisma db push && npx prisma db seed"
+  #   environment: *boutique-env
+  #   volumes:
+  #     - ./boutique/src:/app/src
+  #     - ./boutique/prisma:/app/prisma
+  #   depends_on:
+  #     boutique-db:
+  #       condition: service_healthy
+
   boutique-migrate:
     build: ./boutique
-    command: sh -c "npx prisma db push && npx prisma db seed"
+    command: sh -c "npx prisma generate && npx prisma db push && npx prisma db seed"
     environment: *boutique-env
     volumes:
       - ./boutique/src:/app/src
@@ -119,11 +130,15 @@ services:
       boutique-db:
         condition: service_healthy
 
+#     voici exactement la cause du problème : dans la section volumes, la ligne - ./boutique/src:/app/src monte ton dossier local ./boutique/src dans le conteneur. Cela écrase tout le contenu généré lors du docker build (y compris le dossier /app/src/generated/prisma).
+
+# Pour corriger cela, il faut ajouter npx prisma generate dans la commande du service avant le push et le seed.
+
   boutique:
     build: ./boutique
     image: pcf/boutique:1.0
     ports:
-      - "3003:3000"
+      - "3004:3000"
     environment: *boutique-env
     volumes:
       - ./boutique/public:/app/public

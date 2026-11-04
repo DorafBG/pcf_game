@@ -16,7 +16,7 @@ async function handleRegister() {
   loading.value = true
 
   try {
-    await api.post('/auth/register', {
+    await api.post('api/v1/auth/register', {
       username: username.value,
       email: email.value,
       password: password.value

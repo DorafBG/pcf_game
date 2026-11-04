@@ -56,11 +56,11 @@ export const useShopStore = defineStore('shop', () => {
   // Charger les données depuis le microservice Shop via la Gateway
   async function fetchShopItems() {
     try {
-      const response = await api.get('/shop/items')
+      const response = await api.get('/api/v1/boutique/items')
       items.value = response.data.items
       coins.value = response.data.coins
     } catch (error) {
-      console.warn('Impossible de joindre l\'API Shop, utilisation du mode démo.')
+      console.warn('Impossible de joindre l\'API boutique, utilisation du mode démo.')
     }
   }
 
@@ -71,7 +71,7 @@ export const useShopStore = defineStore('shop', () => {
     }
 
     try {
-      await api.post('/shop/buy', { itemId: item.id })
+      await api.post('/api/v1/boutique/buy', { itemId: item.id })
       coins.value -= item.price
       item.owned = true
     } catch (error) {

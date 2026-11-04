@@ -17,7 +17,7 @@ async function handleLogin() {
     isLoading.value = true
     await authStore.login({ email: email.value, password: password.value })
     // Redirection vers le dashboard après connexion
-    router.push('/dashboard')
+    router.push('/home')
   } catch (error: any) {
     errorMessage.value = error.response?.data?.message || 'Identifiants incorrects'
   } finally {
